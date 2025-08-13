@@ -12,9 +12,6 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  /* iOS Safari에서 바운스 스크롤 방지 */
-  position: fixed;
   width: 100%;
 }
 
@@ -24,17 +21,19 @@ html, body, #root {
 
 /* iOS Safari 전용 스타일 */
 @supports (-webkit-touch-callout: none) {
-  html, body {
-    /* iOS Safari에서 키보드 올라올 때 스크롤 방지 */
-    height: 100%;
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-  }
-  
   textarea, input {
     /* iOS Safari에서 zoom 방지 */
     font-size: 16px;
+  }
+  
+  /* iOS 키보드 워크어라운드가 적용될 때만 viewport 고정 */
+  body.ios-keyboard-workaround {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    overflow: hidden !important;
   }
 }
 
@@ -44,10 +43,13 @@ html, body, #root {
   }
 }
 
-/* 키보드가 열릴 때 body 스크롤 방지 */
-.keyboard-open {
-  overflow: hidden !important;
-  position: fixed !important;
-  width: 100% !important;
-  height: 100% !important;
+/* 키보드가 열릴 때 기본 처리 (iOS 이외) */
+.keyboard-open:not(.ios-keyboard-workaround) {
+  overflow: hidden;
+}
+
+/* iOS 키보드 워크어라운드 추가 스타일 */
+.ios-keyboard-workaround * {
+  /* iOS에서 터치 스크롤 방지 */
+  -webkit-overflow-scrolling: auto;
 }
