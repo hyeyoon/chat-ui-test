@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --keyboard-height: 0px;
+  --viewport-height: 100vh;
+  --visual-viewport-height: 100vh;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  /* iOS Safari에서 바운스 스크롤 방지 */
+  position: fixed;
+  width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* iOS Safari 전용 스타일 */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    /* iOS Safari에서 키보드 올라올 때 스크롤 방지 */
+    height: 100%;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  }
+  
+  textarea, input {
+    /* iOS Safari에서 zoom 방지 */
+    font-size: 16px;
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --viewport-height: 100dvh;
+  }
+}
+
+/* 키보드가 열릴 때 body 스크롤 방지 */
+.keyboard-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+}
