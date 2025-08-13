@@ -13,6 +13,8 @@ html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
+  /* iOS Safari에서 바운스 스크롤 방지 */
+  overscroll-behavior: none;
 }
 
 * {
@@ -24,16 +26,20 @@ html, body, #root {
   textarea, input {
     /* iOS Safari에서 zoom 방지 */
     font-size: 16px;
+    /* iOS에서 input 스타일링 초기화 */
+    -webkit-appearance: none;
+    border-radius: 0;
   }
   
-  /* iOS 키보드 워크어라운드가 적용될 때만 viewport 고정 */
-  body.ios-keyboard-workaround {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    overflow: hidden !important;
+  /* iOS에서 터치 콜아웃 방지 */
+  * {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 선택 가능한 텍스트는 터치 허용 */
+  textarea, input[type="text"], input[type="email"] {
+    -webkit-touch-callout: default;
   }
 }
 
@@ -43,13 +49,15 @@ html, body, #root {
   }
 }
 
-/* 키보드가 열릴 때 기본 처리 (iOS 이외) */
-.keyboard-open:not(.ios-keyboard-workaround) {
-  overflow: hidden;
+/* iOS 키보드 처리를 위한 유틸리티 클래스 */
+.ios-keyboard-active {
+  /* iOS에서 키보드가 활성화된 상태 */
+  position: relative !important;
+  overflow: hidden !important;
 }
 
-/* iOS 키보드 워크어라운드 추가 스타일 */
-.ios-keyboard-workaround * {
-  /* iOS에서 터치 스크롤 방지 */
-  -webkit-overflow-scrolling: auto;
+/* 스크롤 가능한 영역 최적화 */
+.scrollable-area {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
 }

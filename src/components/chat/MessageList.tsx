@@ -140,7 +140,7 @@ export const MessageList: React.FC = () => {
       
       <div
         ref={scrollContainerRef}
-        className="h-full overflow-y-auto px-4 py-4"
+        className="h-full overflow-y-auto px-4 py-4 scrollable-area"
         style={{
           paddingBottom: 'calc(var(--safe-area-inset-bottom) + 1rem)',
           transform: `translateY(${pullDistance}px)`,

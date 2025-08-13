@@ -64,7 +64,7 @@ export const MessageInput: React.FC = () => {
   };
   
   return (
-    <div className="relative">
+    <div className="relative bg-white">
       {/* 메뉴 패널 */}
       {isMenuOpen && (
         <>
@@ -72,7 +72,7 @@ export const MessageInput: React.FC = () => {
             className="fixed inset-0 z-10" 
             onClick={() => setIsMenuOpen(false)}
           />
-          <div className="absolute bottom-full left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
+          <div className="absolute bottom-full left-0 right-0 bg-white border border-gray-200 rounded-t-lg shadow-lg z-20 mb-1">
             <div className="p-4">
               <button
                 onClick={handleQuickLink}
