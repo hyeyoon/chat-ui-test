@@ -10,20 +10,25 @@
   /* VirtualKeyboard API support */
   --keyboard-inset-height: env(keyboard-inset-height, 0px);
   
+  /* Real viewport height - iOS Safari keyboard fix */
+  --app-height: 100vh;
+  --actual-viewport-height: 100vh;
+  
   /* Dynamic viewport height - 2024 modern solution */
   --vh: 100vh;
   --dvh: 100dvh;
 }
 
-/* Modern viewport units with fallback */
-html, body, #root {
+/* iOS Safari viewport fix - Use custom property for actual height */
+html, body {
   margin: 0;
   padding: 0;
   width: 100%;
+  overflow: hidden;
   
-  /* 2024 solution: dvh with 100vh fallback */
+  /* iOS Safari keyboard fix: Use JS-calculated height */
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-height);
   
   /* Prevent bounce scrolling on iOS */
   overscroll-behavior: none;
@@ -33,27 +38,19 @@ html, body, #root {
   text-size-adjust: 100%;
 }
 
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
 
-/* Chat app layout using CSS Grid - 2024 VirtualKeyboard API approach */
-body {
-  display: flex;
-  flex-direction: column;
-  /* Remove grid approach for more reliable behavior */
-}
-
-#root {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  
-  /* Dynamic height based on keyboard state */
-  height: 100vh;
-  height: 100dvh;
-}
+/* Remove complex layout - let JS handle viewport */
 
 /* iOS Safari specific fixes */
 @supports (-webkit-touch-callout: none) {
@@ -133,23 +130,7 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* iOS keyboard active state - Prevent viewport bouncing and blank space */
-.ios-keyboard-active {
-  overflow: hidden !important;
-  /* Prevent iOS Safari from bouncing the viewport */
+/* Simplified platform-specific states */
+.ios-keyboard-active, .android-keyboard-active {
   overscroll-behavior: none !important;
-  /* Ensure content doesn't create extra space */
-  max-height: 100% !important;
-}
-
-.ios-keyboard-active #root {
-  /* Make sure root element fills the constrained body exactly */
-  height: 100% !important;
-  max-height: 100% !important;
-  overflow: hidden !important;
-}
-
-/* Android keyboard active state - Prevent scroll issues */
-.android-keyboard-active {
-  overscroll-behavior: none;
 }

@@ -33,40 +33,14 @@ export const ChatContainer: React.FC = () => {
     loadInitialMessages();
   }, [setMessages, setLoading]);
 
-  // Calculate container height based on platform and keyboard state
+  // Simplified container style using CSS custom properties
   const containerStyle = useMemo(() => {
-    if (platform === 'android') {
-      // Android: Always use fixed positioning to prevent viewport issues
-      const availableHeight = keyboard.isVisible 
-        ? (window.visualViewport?.height || (window.innerHeight - keyboard.height))
-        : window.innerHeight;
-      
-      return {
-        height: `${availableHeight}px`,
-        maxHeight: `${availableHeight}px`,
-        position: 'fixed' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        width: '100%',
-        zIndex: 1,
-      };
-    } else if (platform === 'ios') {
-      // iOS: Always fill the available space within the constrained body
-      return {
-        height: '100%',
-        maxHeight: '100%',
-        position: 'relative' as const,
-      };
-    }
-
-    // Web: Default behavior
     return {
-      height: '100vh',
-      maxHeight: '100vh',
+      height: '100%',
+      maxHeight: '100%',
       position: 'relative' as const,
     };
-  }, [keyboard.isVisible, keyboard.height, platform]);
+  }, []);
 
   return (
     <div 

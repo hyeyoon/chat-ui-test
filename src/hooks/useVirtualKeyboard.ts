@@ -7,8 +7,9 @@ interface VirtualKeyboardState {
 }
 
 /**
- * Modern VirtualKeyboard API hook for 2024
- * Falls back to Visual Viewport API for older browsers
+ * iOS Safari keyboard-aware viewport management
+ * Based on 2024 best practices for iOS Safari keyboard handling
+ * Uses CSS custom properties approach to solve viewport issues
  */
 export function useVirtualKeyboard(): VirtualKeyboardState {
   const [state, setState] = useState<VirtualKeyboardState>({
@@ -21,18 +22,22 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
   const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Check VirtualKeyboard API support
-    const hasVirtualKeyboardAPI = 'virtualKeyboard' in navigator;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
     
-    // Enable VirtualKeyboard API if available
-    if (hasVirtualKeyboardAPI) {
-      try {
-        (navigator as any).virtualKeyboard.overlaysContent = true;
-        console.log('VirtualKeyboard API enabled');
-      } catch (error) {
-        console.warn('Failed to enable VirtualKeyboard API:', error);
+    // iOS Safari viewport height fix function
+    const setViewportHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      
+      // For iOS Safari keyboard handling
+      if (isIOS) {
+        const visualHeight = window.visualViewport?.height || window.innerHeight;
+        document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
+      } else {
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
       }
-    }
+    };
 
     const updateKeyboardState = () => {
       if (timeoutRef.current) {
@@ -43,88 +48,39 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         let keyboardHeight = 0;
         let isVisible = false;
 
-        if (hasVirtualKeyboardAPI) {
-          // Modern approach: Use VirtualKeyboard API
-          try {
-            const virtualKeyboard = (navigator as any).virtualKeyboard;
-            const boundingRect = virtualKeyboard.boundingRect;
-            keyboardHeight = boundingRect.height || 0;
-            
-            // Fallback to CSS environment variable
-            if (keyboardHeight === 0) {
-              const computedStyle = getComputedStyle(document.documentElement);
-              keyboardHeight = parseInt(computedStyle.getPropertyValue('--keyboard-inset-height') || '0');
-            }
-          } catch (error) {
-            console.warn('VirtualKeyboard API error:', error);
-          }
-        }
-
-        // Fallback: Visual Viewport API
-        if (keyboardHeight === 0 && window.visualViewport) {
+        // Calculate keyboard height
+        if (window.visualViewport) {
           keyboardHeight = Math.max(0, initialViewportHeight.current - window.visualViewport.height);
-        }
-
-        // Final fallback: window.innerHeight
-        if (keyboardHeight === 0) {
+        } else {
           keyboardHeight = Math.max(0, initialViewportHeight.current - window.innerHeight);
         }
 
-        // Platform-specific thresholds for keyboard detection
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-        
+        // Platform-specific thresholds
         if (isIOS) {
-          isVisible = keyboardHeight > 100; // iOS threshold
+          isVisible = keyboardHeight > 100;
         } else if (isAndroid) {
-          isVisible = keyboardHeight > 150; // Android threshold (higher due to chrome UI)
+          isVisible = keyboardHeight > 150;
         } else {
-          isVisible = keyboardHeight > 50; // Web threshold
+          isVisible = keyboardHeight > 50;
         }
 
         setState({
           isVisible,
           height: keyboardHeight,
-          isSupported: hasVirtualKeyboardAPI,
+          isSupported: 'visualViewport' in window,
         });
 
-        // Update CSS custom property for other components
-        document.documentElement.style.setProperty('--detected-keyboard-height', `${keyboardHeight}px`);
+        // Update viewport height for iOS Safari fix
+        setViewportHeight();
         
-        // Platform-specific fixes
-        
+        // Platform-specific handling
         if (isIOS) {
           if (isVisible) {
-            // iOS: Fix viewport and prevent blank space
-            const visualHeight = window.visualViewport?.height || window.innerHeight;
-            
-            // Constrain body to prevent blank space below content
-            document.body.style.height = `${visualHeight}px`;
-            document.body.style.overflow = 'hidden';
-            
-            // Ensure root element fits within constrained body
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '100%';
-              rootElement.style.overflow = 'hidden';
-            }
-            
             document.body.classList.add('ios-keyboard-active');
           } else {
-            // iOS: Restore normal behavior
-            document.body.style.height = '';
-            document.body.style.overflow = '';
-            
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '';
-              rootElement.style.overflow = '';
-            }
-            
             document.body.classList.remove('ios-keyboard-active');
           }
         } else if (isAndroid) {
-          // Android: Add marker class for CSS targeting
           if (isVisible) {
             document.body.classList.add('android-keyboard-active');
           } else {
@@ -135,30 +91,23 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
     };
 
     // Event listeners
-    const handleResize = () => updateKeyboardState();
-    const handleGeometryChange = () => updateKeyboardState();
+    const handleResize = () => {
+      setViewportHeight();
+      updateKeyboardState();
+    };
     
-    // Focus/blur events for more accurate keyboard detection
     const handleFocusIn = (e: FocusEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
-        // Delay to allow keyboard animation
         setTimeout(updateKeyboardState, 300);
       }
     };
     
     const handleFocusOut = () => {
-      // Delay to allow keyboard animation
       setTimeout(updateKeyboardState, 300);
     };
     
-    // VirtualKeyboard API events
-    if (hasVirtualKeyboardAPI) {
-      const virtualKeyboard = (navigator as any).virtualKeyboard;
-      virtualKeyboard.addEventListener('geometrychange', handleGeometryChange);
-    }
-
-    // Visual Viewport API events
+    // Visual Viewport API (best for iOS Safari)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
     }
@@ -169,38 +118,32 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
     // Focus events for keyboard detection
     document.addEventListener('focusin', handleFocusIn);
     document.addEventListener('focusout', handleFocusOut);
+    
+    // Orientation change handling
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        initialViewportHeight.current = window.innerHeight;
+        setViewportHeight();
+        updateKeyboardState();
+      }, 500);
+    });
 
-    // Initial state
+    // Initial setup
+    setViewportHeight();
     updateKeyboardState();
 
     // Cleanup
     return () => {
-      if (hasVirtualKeyboardAPI) {
-        const virtualKeyboard = (navigator as any).virtualKeyboard;
-        virtualKeyboard.removeEventListener('geometrychange', handleGeometryChange);
-      }
-
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', handleResize);
       }
 
       window.removeEventListener('resize', handleResize);
-      
       document.removeEventListener('focusin', handleFocusIn);
       document.removeEventListener('focusout', handleFocusOut);
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
-      }
-      
-      // Clean up platform styles on unmount
-      document.body.style.height = '';
-      document.body.style.overflow = '';
-      
-      const rootElement = document.getElementById('root');
-      if (rootElement) {
-        rootElement.style.height = '';
-        rootElement.style.overflow = '';
       }
       
       document.body.classList.remove('ios-keyboard-active', 'android-keyboard-active');
