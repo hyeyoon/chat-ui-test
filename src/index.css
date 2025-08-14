@@ -99,15 +99,18 @@ input:focus, textarea:focus {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* 키보드 위에 고정된 input 스타일 */
+/* 뷰포트 최하단에 고정된 input 스타일 */
 .keyboard-fixed-input {
   position: fixed !important;
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
+  height: 60px !important;
   z-index: 1000 !important;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   background: white !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 /* 디버그 정보 (개발 환경용) */

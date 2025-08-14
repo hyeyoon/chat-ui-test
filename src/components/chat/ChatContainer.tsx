@@ -49,19 +49,23 @@ export const ChatContainer: React.FC = () => {
     return {};
   }, [keyboard.isVisible, keyboard.height]);
 
-  // 입력 영역 - 키보드 바로 위에 고정
+  // 입력 영역 - 보이는 뷰포트의 최하단에 위치
   const inputAreaStyle = useMemo(() => {
     if (keyboard.isVisible && keyboard.height > 0) {
-      // 키보드가 감지되면 키보드 바로 위에 위치
+      // Visual Viewport의 높이를 기준으로 뷰포트 최하단에 위치
+      const visualHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
+      const topPosition = visualHeight - 60; // 입력 영역 높이(약 60px) 만큼 위로
+      
       return {
         position: 'fixed' as const,
-        bottom: `${keyboard.height}px`,
+        top: `${topPosition}px`,
         left: 0,
         right: 0,
         width: '100%',
+        height: '60px',
         zIndex: 1000,
         transform: 'none',
-        transition: 'bottom 0.3s ease-out',
+        transition: 'top 0.3s ease-out',
       };
     }
     // 키보드가 없을 때는 하단에 고정
@@ -81,8 +85,10 @@ export const ChatContainer: React.FC = () => {
           Keyboard: {keyboard.isVisible ? `visible (${keyboard.height}px)` : 'hidden'}<br/>
           Visual Height: {window.visualViewport?.height || 'N/A'}<br/>
           Inner Height: {window.innerHeight}<br/>
-          Input Position: {keyboard.isVisible ? `fixed bottom:${keyboard.height}px` : 'relative'}<br/>
-          Container Height: 100%
+          Input Position: {keyboard.isVisible ? 
+            `fixed top:${(window.visualViewport?.height || (window.innerHeight - keyboard.height)) - 60}px` : 
+            'relative'}<br/>
+          Input at viewport bottom: {keyboard.isVisible ? 'YES' : 'NO'}
         </div>
       )}
 
