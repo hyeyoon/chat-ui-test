@@ -95,46 +95,12 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         
         if (isIOS) {
           if (isVisible) {
-            // iOS: Aggressive approach to prevent blank space
-            const visualHeight = window.visualViewport?.height || window.innerHeight;
-            
-            // Fix body to prevent blank space
-            document.body.style.height = `${visualHeight}px`;
-            document.body.style.maxHeight = `${visualHeight}px`;
+            // iOS: Simple approach - just prevent viewport bounce
             document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.bottom = '0';
-            
-            // Fix root element
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '100%';
-              rootElement.style.maxHeight = '100%';
-              rootElement.style.overflow = 'hidden';
-            }
-            
             document.body.classList.add('ios-keyboard-active');
           } else {
             // iOS: Restore normal behavior
-            document.body.style.height = '';
-            document.body.style.maxHeight = '';
             document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.bottom = '';
-            
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '';
-              rootElement.style.maxHeight = '';
-              rootElement.style.overflow = '';
-            }
-            
             document.body.classList.remove('ios-keyboard-active');
           }
         } else if (isAndroid) {
@@ -208,22 +174,7 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
       }
       
       // Clean up platform styles on unmount
-      document.body.style.height = '';
-      document.body.style.maxHeight = '';
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
-      document.body.style.bottom = '';
-      
-      const rootElement = document.getElementById('root');
-      if (rootElement) {
-        rootElement.style.height = '';
-        rootElement.style.maxHeight = '';
-        rootElement.style.overflow = '';
-      }
-      
       document.body.classList.remove('ios-keyboard-active', 'android-keyboard-active');
     };
   }, []);
