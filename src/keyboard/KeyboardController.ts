@@ -188,8 +188,22 @@ class KeyboardControllerClass {
   private setupVirtualKeyboardAPI(): void {
     // Enable VirtualKeyboard API if available
     if ('virtualKeyboard' in navigator) {
-      (navigator as any).virtualKeyboard.overlaysContent = true;
-      this.log('VirtualKeyboard API enabled');
+      const virtualKeyboard = (navigator as any).virtualKeyboard;
+      
+      if (this.currentState.keyboard.platform === 'android') {
+        // For Android: Enable overlay mode to get accurate keyboard height
+        virtualKeyboard.overlaysContent = true;
+        this.log('VirtualKeyboard API enabled for Android with overlaysContent=true');
+        
+        // Listen to geometry changes for real-time updates
+        virtualKeyboard.addEventListener('geometrychange', () => {
+          this.scheduleStateUpdate();
+        });
+      } else {
+        // For other platforms: Use default behavior
+        virtualKeyboard.overlaysContent = false;
+        this.log('VirtualKeyboard API enabled with overlaysContent=false');
+      }
     }
   }
 
@@ -290,32 +304,65 @@ class KeyboardControllerClass {
 
   private calculateKeyboardState(): KeyboardState {
     const timestamp = Date.now();
-    const safeArea = this.getSafeAreaInsets();
+    const platform = this.currentState.keyboard.platform;
     
     let keyboardHeight = 0;
     let isVisible = false;
-
-    // Try VirtualKeyboard API first
-    if ('virtualKeyboard' in navigator) {
-      const computedStyle = getComputedStyle(document.documentElement);
-      keyboardHeight = parseInt(computedStyle.getPropertyValue('--keyboard-inset-height') || '0');
-    }
-    
-    // Fallback to Visual Viewport API
-    if (keyboardHeight === 0 && window.visualViewport) {
-      keyboardHeight = Math.max(0, this.initialViewportHeight - window.visualViewport.height);
-    }
-    
-    // Final fallback to window resize
-    if (keyboardHeight === 0) {
-      keyboardHeight = Math.max(0, this.initialViewportHeight - window.innerHeight);
-    }
 
     // Check if input is focused
     const activeElement = document.activeElement as HTMLElement;
     const isInputFocused = this.isInputElement(activeElement);
     
-    isVisible = keyboardHeight > 50 && isInputFocused;
+    if (platform === 'android') {
+      // Android: Prioritize VirtualKeyboard API for accurate height
+      if ('virtualKeyboard' in navigator) {
+        const computedStyle = getComputedStyle(document.documentElement);
+        keyboardHeight = parseInt(computedStyle.getPropertyValue('--keyboard-inset-height') || '0');
+        
+        // If VirtualKeyboard API doesn't give height, use Visual Viewport
+        if (keyboardHeight === 0 && window.visualViewport) {
+          keyboardHeight = Math.max(0, this.initialViewportHeight - window.visualViewport.height);
+        }
+      } else if (window.visualViewport) {
+        keyboardHeight = Math.max(0, this.initialViewportHeight - window.visualViewport.height);
+      } else {
+        // Fallback for older Android browsers
+        keyboardHeight = Math.max(0, this.initialViewportHeight - window.innerHeight);
+      }
+      
+      // Android threshold is higher due to browser chrome
+      isVisible = keyboardHeight > 100 && isInputFocused;
+      
+    } else if (platform === 'ios') {
+      // iOS: Use Visual Viewport API with special handling for Safari quirks
+      if (window.visualViewport) {
+        const visualHeight = window.visualViewport.height;
+        keyboardHeight = Math.max(0, this.initialViewportHeight - visualHeight);
+        
+        // iOS Safari specific: Handle the case where Safari doesn't properly report height
+        if (isInputFocused && keyboardHeight < 50) {
+          // Try to detect keyboard presence even when height is not properly reported
+          const heightDiff = this.initialViewportHeight - window.innerHeight;
+          if (heightDiff > 50) {
+            keyboardHeight = heightDiff;
+          }
+        }
+      } else {
+        keyboardHeight = Math.max(0, this.initialViewportHeight - window.innerHeight);
+      }
+      
+      isVisible = keyboardHeight > 50 && isInputFocused;
+      
+    } else {
+      // Web/Desktop: Standard detection
+      if (window.visualViewport) {
+        keyboardHeight = Math.max(0, this.initialViewportHeight - window.visualViewport.height);
+      } else {
+        keyboardHeight = Math.max(0, this.initialViewportHeight - window.innerHeight);
+      }
+      
+      isVisible = keyboardHeight > 50 && isInputFocused;
+    }
 
     return {
       isVisible,
@@ -324,7 +371,7 @@ class KeyboardControllerClass {
       timestamp,
       target: activeElement ? this.getElementId(activeElement) : 0,
       type: 'stable',
-      platform: this.currentState.keyboard.platform,
+      platform,
     };
   }
 
@@ -344,6 +391,36 @@ class KeyboardControllerClass {
     document.documentElement.style.setProperty('--safe-area-inset-bottom', `${safeArea.bottom}px`);
     document.documentElement.style.setProperty('--safe-area-inset-left', `${safeArea.left}px`);
     document.documentElement.style.setProperty('--safe-area-inset-right', `${safeArea.right}px`);
+    
+    // iOS Safari: Fix blank space issue
+    if (keyboard.platform === 'ios') {
+      this.fixiOSBlankSpace(keyboard.isVisible, keyboard.height);
+    }
+  }
+
+  private fixiOSBlankSpace(isKeyboardVisible: boolean, keyboardHeight: number): void {
+    if (isKeyboardVisible) {
+      // Prevent iOS Safari from creating blank space below content
+      document.body.style.height = `${window.visualViewport?.height || window.innerHeight}px`;
+      document.body.style.overflow = 'hidden';
+      
+      // Ensure the main container takes full height
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.height = '100%';
+        rootElement.style.overflow = 'hidden';
+      }
+    } else {
+      // Restore normal height when keyboard is hidden
+      document.body.style.height = '';
+      document.body.style.overflow = '';
+      
+      const rootElement = document.getElementById('root');
+      if (rootElement) {
+        rootElement.style.height = '';
+        rootElement.style.overflow = '';
+      }
+    }
   }
 
   private emitEvent(type: KeyboardEventType, state: KeyboardState): void {

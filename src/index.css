@@ -60,19 +60,17 @@ html, body, #root {
   }
 }
 
-/* VirtualKeyboard API 지원 브라우저용 그리드 레이아웃 */
+/* VirtualKeyboard API 지원 브라우저용 최적화 (Android Chrome 108+) */
 @supports (height: env(keyboard-inset-height)) {
-  body {
-    display: grid;
-    grid-template-rows: 1fr env(keyboard-inset-height, 0px);
-    grid-template-areas: 
-      "main"
-      "keyboard";
+  /* Android에서 VirtualKeyboard API 사용 시 CSS 환경 변수 활용 */
+  :root {
+    --keyboard-inset-height: env(keyboard-inset-height, 0px);
   }
   
-  #root {
-    grid-area: main;
-    overflow: hidden;
+  /* Android Chrome: VirtualKeyboard API로 정확한 키보드 높이 감지 */
+  body {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height */
   }
 }
 
