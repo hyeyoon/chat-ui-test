@@ -133,11 +133,20 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* iOS keyboard active state - Prevent viewport bouncing */
+/* iOS keyboard active state - Prevent viewport bouncing and blank space */
 .ios-keyboard-active {
   overflow: hidden !important;
   /* Prevent iOS Safari from bouncing the viewport */
   overscroll-behavior: none !important;
+  /* Ensure content doesn't create extra space */
+  max-height: 100% !important;
+}
+
+.ios-keyboard-active #root {
+  /* Make sure root element fills the constrained body exactly */
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
 }
 
 /* Android keyboard active state - Prevent scroll issues */

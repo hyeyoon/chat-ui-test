@@ -52,14 +52,10 @@ export const ChatContainer: React.FC = () => {
         zIndex: 1,
       };
     } else if (platform === 'ios') {
-      // iOS: Use relative positioning, let body constraints handle blank space
-      const availableHeight = keyboard.isVisible 
-        ? (window.visualViewport?.height || (window.innerHeight - keyboard.height))
-        : window.innerHeight;
-      
+      // iOS: Always fill the available space within the constrained body
       return {
-        height: `${availableHeight}px`,
-        maxHeight: `${availableHeight}px`,
+        height: '100%',
+        maxHeight: '100%',
         position: 'relative' as const,
       };
     }
