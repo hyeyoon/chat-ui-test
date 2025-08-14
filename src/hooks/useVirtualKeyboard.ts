@@ -47,6 +47,40 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
   const timeoutRef = useRef<NodeJS.Timeout>();
   const isInputFocused = useRef<boolean>(false);
 
+  // iOS Safari용 정확한 viewport 높이 설정
+  const setAppHeight = useCallback((customHeight?: number) => {
+    let targetHeight = customHeight || window.innerHeight;
+    
+    // iOS에서 Visual Viewport API 사용하여 정확한 높이 계산
+    if (state.platform === 'ios' && window.visualViewport) {
+      targetHeight = window.visualViewport.height;
+    }
+    
+    const vh = targetHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    document.documentElement.style.setProperty('--app-height', `${targetHeight}px`);
+    
+    // iOS에서 완전한 뷰포트 제어를 위한 body 스타일 설정
+    if (state.platform === 'ios') {
+      // body 전체를 고정하고 정확한 높이 설정
+      document.body.style.position = 'fixed';
+      document.body.style.top = '0';
+      document.body.style.left = '0';
+      document.body.style.right = '0';
+      document.body.style.width = '100vw';
+      document.body.style.height = `${targetHeight}px`;
+      document.body.style.minHeight = `${targetHeight}px`;
+      document.body.style.maxHeight = `${targetHeight}px`;
+      document.body.style.overflow = 'hidden';
+      
+      // 키보드 영역에 흰 배경 제거를 위한 추가 설정
+      document.documentElement.style.height = `${targetHeight}px`;
+      document.documentElement.style.minHeight = `${targetHeight}px`;
+      document.documentElement.style.maxHeight = `${targetHeight}px`;
+      document.documentElement.style.overflow = 'hidden';
+    }
+  }, [state.platform]);
+
   const updateKeyboardState = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -84,26 +118,45 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
         height: keyboardHeight,
       }));
 
-      // body 클래스로 키보드 상태 관리 (흰 영역 방지)
+      // 플랫폼별 키보드 상태 관리
       if (isVisible) {
         document.body.classList.add('keyboard-open');
-        // iOS Safari에서 추가 고정
+        
         if (state.platform === 'ios') {
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
-          document.body.style.height = '100%';
+          // iOS: Visual Viewport 높이로 뷰포트 크기 조절
+          const visualHeight = window.visualViewport?.height || (window.innerHeight - keyboardHeight);
+          setAppHeight(visualHeight);
+          
+          console.log(`iOS keyboard detected: ${keyboardHeight}px, adjusting viewport to: ${visualHeight}px`);
         }
       } else {
         document.body.classList.remove('keyboard-open');
-        // iOS Safari 고정 해제
+        
         if (state.platform === 'ios') {
+          // iOS: 키보드 닫힐 때 원래 뷰포트로 복원 및 스타일 정리
+          setAppHeight(initialViewportHeight.current);
+          
+          // body와 html 스타일 완전 복원
           document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.left = '';
+          document.body.style.right = '';
           document.body.style.width = '';
           document.body.style.height = '';
+          document.body.style.minHeight = '';
+          document.body.style.maxHeight = '';
+          document.body.style.overflow = '';
+          
+          document.documentElement.style.height = '';
+          document.documentElement.style.minHeight = '';
+          document.documentElement.style.maxHeight = '';
+          document.documentElement.style.overflow = '';
+          
+          console.log(`iOS keyboard hidden, restoring viewport to: ${initialViewportHeight.current}px`);
         }
       }
     }, debounceMs);
-  }, [state.platform, threshold, debounceMs]);
+  }, [state.platform, threshold, debounceMs, setAppHeight]);
 
   // 입력 필드 포커스 감지 (iOS Safari에서 중요)
   const handleFocusIn = useCallback((e: FocusEvent) => {
@@ -125,13 +178,6 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
     const platform = state.platform;
     const capabilities = getPlatformCapabilities(platform);
 
-    // 초기 viewport 높이 설정 및 CSS 변수 업데이트
-    const setAppHeight = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-    };
-
     // Android Chrome 108+: VirtualKeyboard API 활성화
     if (platform === 'android' && capabilities.supportsVirtualKeyboard) {
       try {
@@ -145,8 +191,31 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
     // 초기 높이 설정
     setAppHeight();
 
+    // iOS Safari를 위한 Visual Viewport 전용 핸들러
+    const visualViewportHandler = () => {
+      if (platform === 'ios' && window.visualViewport) {
+        const visualHeight = window.visualViewport.height;
+        const keyboardHeight = Math.max(0, initialViewportHeight.current - visualHeight);
+        const isKeyboardVisible = keyboardHeight > (threshold * 2) && isInputFocused.current;
+        
+        // 실시간 뷰포트 조절
+        setAppHeight(visualHeight);
+        
+        // 상태 업데이트
+        setState(prev => ({
+          ...prev,
+          isVisible: isKeyboardVisible,
+          height: keyboardHeight,
+        }));
+        
+        console.log(`iOS Visual Viewport: ${visualHeight}px, Keyboard: ${keyboardHeight}px`);
+      } else {
+        updateKeyboardState();
+      }
+    };
+
     // 이벤트 리스너 등록
-    const resizeHandler = updateKeyboardState;
+    const resizeHandler = platform === 'ios' ? visualViewportHandler : updateKeyboardState;
 
     // Visual Viewport API 우선 사용 (iOS Safari, Android Chrome)
     if (window.visualViewport) {
@@ -188,10 +257,26 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
       // cleanup 시 키보드 관련 스타일 모두 제거
       document.body.classList.remove('keyboard-open');
       document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
       document.body.style.width = '';
       document.body.style.height = '';
+      document.body.style.minHeight = '';
+      document.body.style.maxHeight = '';
+      document.body.style.overflow = '';
+      
+      // html 스타일도 초기화
+      document.documentElement.style.height = '';
+      document.documentElement.style.minHeight = '';
+      document.documentElement.style.maxHeight = '';
+      document.documentElement.style.overflow = '';
+      
+      // CSS 변수 초기화
+      document.documentElement.style.setProperty('--app-height', '100vh');
+      document.documentElement.style.setProperty('--vh', '1vh');
     };
-  }, [state.platform, updateKeyboardState, handleFocusIn, handleFocusOut]);
+  }, [state.platform, updateKeyboardState, handleFocusIn, handleFocusOut, setAppHeight]);
 
   return state;
 }

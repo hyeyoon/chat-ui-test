@@ -6,13 +6,15 @@
   --vh: 1vh;
 }
 
-/* 기본 리셋 - 흰 영역 완전 차단 */
+/* 기본 리셋 - iOS 키보드 흰 공백 완전 차단 */
 html {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
   overflow: hidden;
+  background-color: #ffffff;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -20,7 +22,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  width: 100%;
+  width: 100vw;
   height: var(--app-height);
   min-height: var(--app-height);
   max-height: var(--app-height);
@@ -31,25 +33,36 @@ body {
   bottom: 0;
   overflow: hidden;
   overscroll-behavior: none;
+  background-color: #ffffff;
   /* iOS Safari 강제 고정 */
   -webkit-overflow-scrolling: touch;
 }
 
-/* iOS Safari에서 키보드 열릴 때 body 스크롤 방지 */
+/* iOS Safari에서 키보드 열릴 때 body 스크롤 방지 및 흰 공백 제거 */
 body.keyboard-open {
   position: fixed !important;
-  width: 100% !important;
-  height: 100% !important;
+  width: 100vw !important;
+  height: var(--app-height) !important;
+  min-height: var(--app-height) !important;
+  max-height: var(--app-height) !important;
   overflow: hidden !important;
+  background-color: #ffffff !important;
 }
 
 #root {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
-  position: relative;
+  width: 100vw;
+  height: var(--app-height);
+  min-height: var(--app-height);
+  max-height: var(--app-height);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
+  background-color: #ffffff;
 }
 
 * {

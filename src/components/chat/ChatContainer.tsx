@@ -25,8 +25,24 @@ export const ChatContainer: React.FC = () => {
     loadInitialMessages();
   }, [setMessages, setLoading]);
 
-  // 전체 컨테이너는 항상 화면 전체를 차지 (흰 공백 방지)
+  // iOS에서는 키보드 흰 공백 제거를 위한 완전한 뷰포트 제어
   const containerStyle = useMemo(() => {
+    if (keyboard.platform === 'ios') {
+      return {
+        position: 'fixed' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: 'var(--app-height)',
+        maxHeight: 'var(--app-height)',
+        minHeight: 'var(--app-height)',
+        overflow: 'hidden',
+        backgroundColor: '#ffffff',
+      };
+    }
+    
     return {
       position: 'fixed' as const,
       top: 0,
@@ -36,7 +52,7 @@ export const ChatContainer: React.FC = () => {
       width: '100%',
       height: '100%',
     };
-  }, []);
+  }, [keyboard.platform]);
 
   // 메시지 리스트 영역 - 키보드가 열릴 때 패딩 추가
   const messageListStyle = useMemo(() => {
