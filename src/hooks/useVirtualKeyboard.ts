@@ -81,31 +81,64 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         // Update CSS custom property for other components
         document.documentElement.style.setProperty('--detected-keyboard-height', `${keyboardHeight}px`);
         
-        // iOS Safari specific fixes for blank space issue
+        // iOS Safari specific fixes for blank space issue - More aggressive approach
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
           if (isVisible) {
-            // Fix iOS Safari blank space by constraining body height
+            // Multiple strategies to prevent iOS Safari blank space
             const visualHeight = window.visualViewport?.height || window.innerHeight;
-            document.body.style.height = `${visualHeight}px`;
-            document.body.style.overflow = 'hidden';
             
-            // Also constrain root element
+            // 1. Fix body height and position
+            document.body.style.height = `${visualHeight}px`;
+            document.body.style.maxHeight = `${visualHeight}px`;
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = '0';
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.bottom = '0';
+            
+            // 2. Fix root element
             const rootElement = document.getElementById('root');
             if (rootElement) {
               rootElement.style.height = '100%';
+              rootElement.style.maxHeight = '100%';
               rootElement.style.overflow = 'hidden';
+              rootElement.style.position = 'relative';
             }
+            
+            // 3. Prevent scroll and zoom
+            document.documentElement.style.overflow = 'hidden';
+            document.documentElement.style.height = `${visualHeight}px`;
+            document.documentElement.style.maxHeight = `${visualHeight}px`;
+            
+            // 4. Add iOS-specific class for additional CSS control
+            document.body.classList.add('ios-keyboard-active');
+            
           } else {
-            // Restore normal behavior
+            // Restore normal behavior completely
             document.body.style.height = '';
+            document.body.style.maxHeight = '';
             document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.left = '';
+            document.body.style.right = '';
+            document.body.style.bottom = '';
             
             const rootElement = document.getElementById('root');
             if (rootElement) {
               rootElement.style.height = '';
+              rootElement.style.maxHeight = '';
               rootElement.style.overflow = '';
+              rootElement.style.position = '';
             }
+            
+            document.documentElement.style.overflow = '';
+            document.documentElement.style.height = '';
+            document.documentElement.style.maxHeight = '';
+            
+            document.body.classList.remove('ios-keyboard-active');
           }
         }
       }, 100);
@@ -114,6 +147,20 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
     // Event listeners
     const handleResize = () => updateKeyboardState();
     const handleGeometryChange = () => updateKeyboardState();
+    
+    // Focus/blur events for more accurate keyboard detection
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
+        // Delay to allow keyboard animation
+        setTimeout(updateKeyboardState, 300);
+      }
+    };
+    
+    const handleFocusOut = () => {
+      // Delay to allow keyboard animation
+      setTimeout(updateKeyboardState, 300);
+    };
     
     // VirtualKeyboard API events
     if (hasVirtualKeyboardAPI) {
@@ -128,6 +175,10 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
 
     // Window resize fallback
     window.addEventListener('resize', handleResize);
+    
+    // Focus events for keyboard detection
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
 
     // Initial state
     updateKeyboardState();
@@ -144,22 +195,38 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
       }
 
       window.removeEventListener('resize', handleResize);
+      
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
 
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       
-      // Clean up iOS styles on unmount
+      // Clean up iOS styles on unmount - Complete cleanup
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       if (isIOS) {
         document.body.style.height = '';
+        document.body.style.maxHeight = '';
         document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.body.style.right = '';
+        document.body.style.bottom = '';
+        document.body.classList.remove('ios-keyboard-active');
         
         const rootElement = document.getElementById('root');
         if (rootElement) {
           rootElement.style.height = '';
+          rootElement.style.maxHeight = '';
           rootElement.style.overflow = '';
+          rootElement.style.position = '';
         }
+        
+        document.documentElement.style.overflow = '';
+        document.documentElement.style.height = '';
+        document.documentElement.style.maxHeight = '';
       }
     };
   }, []);
