@@ -36,44 +36,32 @@ export const ChatContainer: React.FC = () => {
   // Calculate container height based on platform and keyboard state
   const containerStyle = useMemo(() => {
     if (platform === 'android') {
-      if (keyboard.isVisible) {
-        // Android: Use visual viewport height to stay within visible area
-        const availableHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
-        return {
-          height: `${availableHeight}px`,
-          maxHeight: `${availableHeight}px`,
-          position: 'fixed' as const,
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 1,
-        };
-      } else {
-        // Android: Normal state
-        return {
-          height: '100vh',
-          maxHeight: '100vh',
-          position: 'relative' as const,
-        };
-      }
+      // Android: Always use fixed positioning to prevent viewport issues
+      const availableHeight = keyboard.isVisible 
+        ? (window.visualViewport?.height || (window.innerHeight - keyboard.height))
+        : window.innerHeight;
+      
+      return {
+        height: `${availableHeight}px`,
+        maxHeight: `${availableHeight}px`,
+        position: 'fixed' as const,
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        zIndex: 1,
+      };
     } else if (platform === 'ios') {
-      if (keyboard.isVisible) {
-        // iOS: Reduce viewport by keyboard height to show content properly
-        const availableHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
-        return {
-          height: `${availableHeight}px`,
-          maxHeight: `${availableHeight}px`,
-          position: 'relative' as const,
-        };
-      } else {
-        // iOS: Normal state
-        return {
-          height: '100vh',
-          maxHeight: '100vh',
-          position: 'relative' as const,
-        };
-      }
+      // iOS: Use relative positioning, let body constraints handle blank space
+      const availableHeight = keyboard.isVisible 
+        ? (window.visualViewport?.height || (window.innerHeight - keyboard.height))
+        : window.innerHeight;
+      
+      return {
+        height: `${availableHeight}px`,
+        maxHeight: `${availableHeight}px`,
+        position: 'relative' as const,
+      };
     }
 
     // Web: Default behavior
