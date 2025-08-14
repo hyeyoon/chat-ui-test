@@ -1,39 +1,13 @@
 @import "tailwindcss";
 
-:root {
-  /* Safe area insets for devices with notches */
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --safe-area-inset-right: env(safe-area-inset-right, 0px);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-inset-left: env(safe-area-inset-left, 0px);
-  
-  /* VirtualKeyboard API support */
-  --keyboard-inset-height: env(keyboard-inset-height, 0px);
-  
-  /* Real viewport height - iOS Safari keyboard fix */
-  --app-height: 100vh;
-  --actual-viewport-height: 100vh;
-  
-  /* Dynamic viewport height - 2024 modern solution */
-  --vh: 100vh;
-  --dvh: 100dvh;
-}
-
-/* iOS Safari viewport fix - Use custom property for actual height */
+/* 기본 리셋 */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  overflow: hidden;
-  
-  /* iOS Safari keyboard fix: Use JS-calculated height */
   height: 100vh;
-  height: var(--app-height);
-  
-  /* Prevent bounce scrolling on iOS */
+  overflow: hidden;
   overscroll-behavior: none;
-  
-  /* Prevent text size adjust on orientation change */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -44,85 +18,32 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative;
 }
 
 * {
   box-sizing: border-box;
 }
 
-/* Remove complex layout - let JS handle viewport */
-
-/* iOS Safari specific fixes */
-@supports (-webkit-touch-callout: none) {
-  /* Prevent zoom on input focus */
-  input, textarea, select {
-    font-size: 16px;
-    -webkit-appearance: none;
-  }
-  
-  /* Disable text selection callouts globally */
-  * {
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  /* Re-enable text selection for inputs */
-  input, textarea {
-    -webkit-touch-callout: default;
-    -webkit-user-select: text;
-    user-select: text;
-  }
+/* Safe area 지원 */
+.safe-area {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
 }
 
-/* Modern CSS environment variable support */
-@supports (padding: env(safe-area-inset-top)) {
-  .safe-area {
-    padding-top: env(safe-area-inset-top);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-  }
-}
-
-/* VirtualKeyboard API support detection */
-@supports (height: env(keyboard-inset-height)) {
-  .keyboard-aware {
-    margin-bottom: env(keyboard-inset-height, 0px);
-  }
-}
-
-/* iOS Safari specific blank space fixes */
-@supports (-webkit-touch-callout: none) {
-  /* Fix for iOS Safari viewport issues */
-  body {
-    position: relative;
-    overflow-x: hidden;
-  }
-  
-  /* Prevent iOS Safari from shifting layout */
-  #root {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  /* iOS keyboard specific fixes */
-  .keyboard-aware {
-    /* Ensure input stays at bottom on iOS */
-    position: sticky;
-    bottom: 0;
-    z-index: 1000;
-  }
-}
-
-/* Modern input styling to prevent zoom on iOS */
+/* 모바일 입력 스타일링 (줌 방지) */
 input, textarea {
-  font-size: max(16px, 1rem);
+  font-size: 16px;
   background-color: white;
   border-radius: 0.5rem;
   border: 1px solid #e5e7eb;
   padding: 0.75rem;
   outline: none;
   transition: border-color 0.15s ease-in-out;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 input:focus, textarea:focus {
@@ -130,14 +51,87 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Platform-specific keyboard states */
-.ios-keyboard-active, .android-keyboard-active {
-  overscroll-behavior: none !important;
+/* iOS Safari 터치 동작 최적화 */
+@supports (-webkit-touch-callout: none) {
+  /* 터치 콜아웃과 하이라이트 비활성화 */
+  * {
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 입력 필드에서는 텍스트 선택 활성화 */
+  input, textarea {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  
+  /* iOS에서 position: fixed 문제 해결을 위한 transform 기반 positioning */
+  .ios-keyboard-input-fixed {
+    position: absolute !important;
+    transform: translateY(-100%) !important;
+    transition: transform 0.25s ease-out !important;
+  }
 }
 
-/* Input area styling when keyboard is active */
+/* Android Chrome 108+ VirtualKeyboard API 지원 */
+@supports (height: env(keyboard-inset-height)) {
+  /* Android: CSS 환경변수 사용하여 키보드 위에 입력 영역 위치 */
+  .android-keyboard-input-env {
+    position: fixed !important;
+    bottom: env(keyboard-inset-height, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    transform: none !important;
+    transition: bottom 0.25s ease-out !important;
+  }
+  
+  /* Android: 키보드 높이만큼 컨테이너 패딩 조정 */
+  .android-keyboard-container {
+    padding-bottom: env(keyboard-inset-height, 0px) !important;
+  }
+}
+
+/* 키보드가 활성화된 입력 영역 스타일링 */
 .keyboard-input-active {
   border-top: 1px solid #e5e7eb;
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
   background-color: white !important;
+  z-index: 1000;
+}
+
+/* 플랫폼별 키보드 상태 클래스 */
+.platform-ios.keyboard-active {
+  /* iOS: 전체 뷰포트 고정 */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.platform-android.keyboard-active {
+  /* Android: VirtualKeyboard API와 함께 사용 */
+  overflow: hidden;
+}
+
+/* 키보드 감지 시 애니메이션 */
+.keyboard-transition {
+  transition: all 0.25s ease-out;
+}
+
+/* 디버그 정보 (개발 환경용) */
+.keyboard-debug {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+  font-family: monospace;
 }
