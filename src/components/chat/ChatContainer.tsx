@@ -49,18 +49,27 @@ export const ChatContainer: React.FC = () => {
     return {};
   }, [keyboard.isVisible, keyboard.height]);
 
-  // 입력 영역 - 키보드 위에 고정
+  // 입력 영역 - 키보드 바로 위에 고정
   const inputAreaStyle = useMemo(() => {
-    if (keyboard.isVisible) {
+    if (keyboard.isVisible && keyboard.height > 0) {
+      // 키보드가 감지되면 키보드 바로 위에 위치
       return {
         position: 'fixed' as const,
         bottom: `${keyboard.height}px`,
         left: 0,
         right: 0,
+        width: '100%',
         zIndex: 1000,
+        transform: 'none',
+        transition: 'bottom 0.3s ease-out',
       };
     }
-    return {};
+    // 키보드가 없을 때는 하단에 고정
+    return {
+      position: 'relative' as const,
+      bottom: 'auto',
+      transform: 'none',
+    };
   }, [keyboard.isVisible, keyboard.height]);
 
   return (
@@ -71,7 +80,9 @@ export const ChatContainer: React.FC = () => {
           Platform: {keyboard.platform}<br/>
           Keyboard: {keyboard.isVisible ? `visible (${keyboard.height}px)` : 'hidden'}<br/>
           Visual Height: {window.visualViewport?.height || 'N/A'}<br/>
-          Inner Height: {window.innerHeight}
+          Inner Height: {window.innerHeight}<br/>
+          Input Position: {keyboard.isVisible ? `fixed bottom:${keyboard.height}px` : 'relative'}<br/>
+          Container Height: 100%
         </div>
       )}
 
@@ -95,7 +106,9 @@ export const ChatContainer: React.FC = () => {
         {/* Input Area with bottom safe area */}
         <footer 
           className={`flex-shrink-0 bg-white border-t border-gray-200 ${
-            keyboard.isVisible ? 'keyboard-input-with-safe-area' : 'safe-area-bottom'
+            keyboard.isVisible && keyboard.height > 0 
+              ? 'keyboard-input-with-safe-area keyboard-fixed-input' 
+              : 'safe-area-bottom'
           }`}
           style={inputAreaStyle}
         >
