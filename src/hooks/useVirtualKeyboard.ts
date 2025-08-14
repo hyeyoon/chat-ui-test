@@ -83,6 +83,25 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
         isVisible,
         height: keyboardHeight,
       }));
+
+      // body 클래스로 키보드 상태 관리 (흰 영역 방지)
+      if (isVisible) {
+        document.body.classList.add('keyboard-open');
+        // iOS Safari에서 추가 고정
+        if (state.platform === 'ios') {
+          document.body.style.position = 'fixed';
+          document.body.style.width = '100%';
+          document.body.style.height = '100%';
+        }
+      } else {
+        document.body.classList.remove('keyboard-open');
+        // iOS Safari 고정 해제
+        if (state.platform === 'ios') {
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.height = '';
+        }
+      }
     }, debounceMs);
   }, [state.platform, threshold, debounceMs]);
 
@@ -106,6 +125,13 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
     const platform = state.platform;
     const capabilities = getPlatformCapabilities(platform);
 
+    // 초기 viewport 높이 설정 및 CSS 변수 업데이트
+    const setAppHeight = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+    };
+
     // Android Chrome 108+: VirtualKeyboard API 활성화
     if (platform === 'android' && capabilities.supportsVirtualKeyboard) {
       try {
@@ -115,6 +141,9 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
         console.warn('❌ VirtualKeyboard API activation failed:', error);
       }
     }
+
+    // 초기 높이 설정
+    setAppHeight();
 
     // 이벤트 리스너 등록
     const resizeHandler = updateKeyboardState;
@@ -155,6 +184,12 @@ export function useVirtualKeyboard(config: Partial<KeyboardConfig> = {}): Virtua
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+
+      // cleanup 시 키보드 관련 스타일 모두 제거
+      document.body.classList.remove('keyboard-open');
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     };
   }, [state.platform, updateKeyboardState, handleFocusIn, handleFocusOut]);
 

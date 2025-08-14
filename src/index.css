@@ -1,19 +1,29 @@
 @import "tailwindcss";
 
-/* 기본 리셋 - 뷰포트 고정 */
+/* CSS 변수로 실제 viewport 높이 관리 */
+:root {
+  --app-height: 100vh;
+  --vh: 1vh;
+}
+
+/* 기본 리셋 - 흰 영역 완전 차단 */
 html {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: var(--app-height);
+  min-height: var(--app-height);
+  max-height: var(--app-height);
   position: fixed;
   top: 0;
   left: 0;
@@ -21,8 +31,16 @@ body {
   bottom: 0;
   overflow: hidden;
   overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+  /* iOS Safari 강제 고정 */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS Safari에서 키보드 열릴 때 body 스크롤 방지 */
+body.keyboard-open {
+  position: fixed !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 #root {
@@ -30,11 +48,7 @@ body {
   padding: 0;
   width: 100%;
   height: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   overflow: hidden;
 }
 
