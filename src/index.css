@@ -1,11 +1,24 @@
 @import "tailwindcss";
 
-/* 기본 리셋 */
-html, body {
+/* 기본 리셋 - 뷰포트 고정 */
+html {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100vh;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
@@ -17,8 +30,12 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overflow: hidden;
-  position: relative;
 }
 
 * {
@@ -65,67 +82,6 @@ input:focus, textarea:focus {
     -webkit-user-select: text;
     user-select: text;
   }
-  
-  /* iOS에서 position: fixed 문제 해결을 위한 transform 기반 positioning */
-  .ios-keyboard-input-fixed {
-    position: absolute !important;
-    transform: translateY(-100%) !important;
-    transition: transform 0.25s ease-out !important;
-  }
-}
-
-/* Android Chrome 108+ VirtualKeyboard API 지원 */
-@supports (height: env(keyboard-inset-height)) {
-  /* Android: CSS 환경변수 사용하여 키보드 위에 입력 영역 위치 */
-  .android-keyboard-input-env {
-    position: fixed !important;
-    bottom: env(keyboard-inset-height, 0px) !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    transform: none !important;
-    transition: bottom 0.25s ease-out !important;
-  }
-  
-  /* Android: 키보드 높이만큼 컨테이너 패딩 조정 */
-  .android-keyboard-container {
-    padding-bottom: env(keyboard-inset-height, 0px) !important;
-  }
-}
-
-/* 키보드가 활성화된 입력 영역 스타일링 */
-.keyboard-input-active {
-  border-top: 1px solid #e5e7eb;
-  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
-  background-color: white !important;
-  z-index: 1000;
-}
-
-/* 플랫폼별 키보드 상태 클래스 */
-.platform-ios.keyboard-active {
-  /* iOS: 키보드가 열릴 때 viewport 고정 */
-  overflow: hidden;
-}
-
-.platform-android {
-  /* Android: 항상 viewport를 화면 상단에 고정 */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100vh;
-}
-
-.platform-android.keyboard-active {
-  /* Android: 키보드가 열릴 때 추가 처리 */
-  overflow: hidden;
-}
-
-/* 키보드 감지 시 애니메이션 */
-.keyboard-transition {
-  transition: all 0.25s ease-out;
 }
 
 /* 디버그 정보 (개발 환경용) */

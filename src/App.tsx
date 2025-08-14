@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="h-screen w-screen overflow-hidden">
+      <div className="fixed inset-0 overflow-hidden">
         <ChatContainer />
       </div>
     </QueryClientProvider>
