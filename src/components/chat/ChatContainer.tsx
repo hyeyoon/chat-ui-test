@@ -35,32 +35,52 @@ export const ChatContainer: React.FC = () => {
 
   // Calculate container height based on platform and keyboard state
   const containerStyle = useMemo(() => {
-    if (!keyboard.isVisible) {
-      return {
-        height: '100vh',
-        maxHeight: '100vh',
-      };
-    }
-
     if (platform === 'android') {
-      // Android: Reduce container height by keyboard height to show chat content with scroll
-      const availableHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
-      return {
-        height: `${availableHeight}px`,
-        maxHeight: `${availableHeight}px`,
-      };
+      if (keyboard.isVisible) {
+        // Android: Use visual viewport height to stay within visible area
+        const availableHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
+        return {
+          height: `${availableHeight}px`,
+          maxHeight: `${availableHeight}px`,
+          position: 'fixed' as const,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 1,
+        };
+      } else {
+        // Android: Normal state
+        return {
+          height: '100vh',
+          maxHeight: '100vh',
+          position: 'relative' as const,
+        };
+      }
     } else if (platform === 'ios') {
-      // iOS: Use visual viewport height to prevent blank space
-      const availableHeight = window.visualViewport?.height || window.innerHeight;
-      return {
-        height: `${availableHeight}px`,
-        maxHeight: `${availableHeight}px`,
-      };
+      if (keyboard.isVisible) {
+        // iOS: Reduce viewport by keyboard height to show content properly
+        const availableHeight = window.visualViewport?.height || (window.innerHeight - keyboard.height);
+        return {
+          height: `${availableHeight}px`,
+          maxHeight: `${availableHeight}px`,
+          position: 'relative' as const,
+        };
+      } else {
+        // iOS: Normal state
+        return {
+          height: '100vh',
+          maxHeight: '100vh',
+          position: 'relative' as const,
+        };
+      }
     }
 
+    // Web: Default behavior
     return {
       height: '100vh',
       maxHeight: '100vh',
+      position: 'relative' as const,
     };
   }, [keyboard.isVisible, keyboard.height, platform]);
 
@@ -83,10 +103,9 @@ export const ChatContainer: React.FC = () => {
       <footer 
         className="flex-shrink-0 bg-white"
         style={{
-          position: keyboard.isVisible && platform !== 'web' ? 'sticky' : 'relative',
+          position: 'relative',
           bottom: 0,
           zIndex: keyboard.isVisible ? 1000 : 'auto',
-          // Remove transform approach for more reliable positioning
         }}
       >
         <MessageInput />

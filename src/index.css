@@ -133,37 +133,23 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* iOS keyboard active state - Aggressive blank space prevention */
+/* iOS keyboard active state - Prevent viewport bouncing */
 .ios-keyboard-active {
-  /* Ensure no extra space can appear */
-  height: 100% !important;
-  max-height: 100% !important;
   overflow: hidden !important;
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-}
-
-.ios-keyboard-active #root {
-  height: 100% !important;
-  max-height: 100% !important;
-  overflow: hidden !important;
-  position: relative !important;
-}
-
-/* Prevent any scrolling during iOS keyboard state */
-.ios-keyboard-active * {
-  /* Prevent any element from creating scroll */
+  /* Prevent iOS Safari from bouncing the viewport */
   overscroll-behavior: none !important;
 }
 
-/* Ensure input area stays visible on iOS */
-.ios-keyboard-active footer {
-  position: absolute !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 9999 !important;
+/* Android keyboard active state - Additional support if needed */
+.android-keyboard-active {
+  /* Android-specific keyboard handling if needed */
+  overscroll-behavior: none;
+}
+
+/* Platform-specific input handling */
+@supports (-webkit-touch-callout: none) {
+  .ios-keyboard-active {
+    /* Additional iOS-specific fixes */
+    -webkit-overflow-scrolling: touch;
+  }
 }

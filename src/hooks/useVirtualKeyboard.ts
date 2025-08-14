@@ -70,7 +70,17 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
           keyboardHeight = Math.max(0, initialViewportHeight.current - window.innerHeight);
         }
 
-        isVisible = keyboardHeight > 50; // 50px threshold
+        // Platform-specific thresholds for keyboard detection
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
+        if (isIOS) {
+          isVisible = keyboardHeight > 100; // iOS threshold
+        } else if (isAndroid) {
+          isVisible = keyboardHeight > 150; // Android threshold (higher due to chrome UI)
+        } else {
+          isVisible = keyboardHeight > 50; // Web threshold
+        }
 
         setState({
           isVisible,
@@ -81,64 +91,28 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         // Update CSS custom property for other components
         document.documentElement.style.setProperty('--detected-keyboard-height', `${keyboardHeight}px`);
         
-        // iOS Safari specific fixes for blank space issue - More aggressive approach
+        // Platform-specific fixes
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /Android/.test(navigator.userAgent);
+        
         if (isIOS) {
           if (isVisible) {
-            // Multiple strategies to prevent iOS Safari blank space
-            const visualHeight = window.visualViewport?.height || window.innerHeight;
-            
-            // 1. Fix body height and position
-            document.body.style.height = `${visualHeight}px`;
-            document.body.style.maxHeight = `${visualHeight}px`;
+            // iOS: Less aggressive approach - let ChatContainer handle sizing
+            // Just prevent the Safari viewport jump behavior
             document.body.style.overflow = 'hidden';
-            document.body.style.position = 'fixed';
-            document.body.style.top = '0';
-            document.body.style.left = '0';
-            document.body.style.right = '0';
-            document.body.style.bottom = '0';
-            
-            // 2. Fix root element
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '100%';
-              rootElement.style.maxHeight = '100%';
-              rootElement.style.overflow = 'hidden';
-              rootElement.style.position = 'relative';
-            }
-            
-            // 3. Prevent scroll and zoom
-            document.documentElement.style.overflow = 'hidden';
-            document.documentElement.style.height = `${visualHeight}px`;
-            document.documentElement.style.maxHeight = `${visualHeight}px`;
-            
-            // 4. Add iOS-specific class for additional CSS control
             document.body.classList.add('ios-keyboard-active');
-            
           } else {
-            // Restore normal behavior completely
-            document.body.style.height = '';
-            document.body.style.maxHeight = '';
+            // iOS: Restore normal behavior
             document.body.style.overflow = '';
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.bottom = '';
-            
-            const rootElement = document.getElementById('root');
-            if (rootElement) {
-              rootElement.style.height = '';
-              rootElement.style.maxHeight = '';
-              rootElement.style.overflow = '';
-              rootElement.style.position = '';
-            }
-            
-            document.documentElement.style.overflow = '';
-            document.documentElement.style.height = '';
-            document.documentElement.style.maxHeight = '';
-            
             document.body.classList.remove('ios-keyboard-active');
+          }
+        } else if (isAndroid) {
+          // Android: Let the ChatContainer positioning handle the layout
+          // Just add marker class for CSS targeting
+          if (isVisible) {
+            document.body.classList.add('android-keyboard-active');
+          } else {
+            document.body.classList.remove('android-keyboard-active');
           }
         }
       }, 100);
@@ -203,31 +177,9 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         clearTimeout(timeoutRef.current);
       }
       
-      // Clean up iOS styles on unmount - Complete cleanup
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        document.body.style.height = '';
-        document.body.style.maxHeight = '';
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.left = '';
-        document.body.style.right = '';
-        document.body.style.bottom = '';
-        document.body.classList.remove('ios-keyboard-active');
-        
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-          rootElement.style.height = '';
-          rootElement.style.maxHeight = '';
-          rootElement.style.overflow = '';
-          rootElement.style.position = '';
-        }
-        
-        document.documentElement.style.overflow = '';
-        document.documentElement.style.height = '';
-        document.documentElement.style.maxHeight = '';
-      }
+      // Clean up platform styles on unmount
+      document.body.style.overflow = '';
+      document.body.classList.remove('ios-keyboard-active', 'android-keyboard-active');
     };
   }, []);
 
