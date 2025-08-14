@@ -1,5 +1,6 @@
 import React, { forwardRef, CSSProperties } from 'react';
-import { useKeyboardState, useKeyboardAnimation } from '../hooks';
+import { useKeyboardState } from '../hooks/useKeyboardState';
+import { useKeyboardAnimation } from '../hooks/useKeyboardAnimation';
 
 export interface KeyboardAwareViewProps {
   /** Child elements */
