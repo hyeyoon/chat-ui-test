@@ -29,7 +29,7 @@ export const ChatContainer: React.FC = () => {
 
   // 플랫폼별 컨테이너 클래스명 생성
   const containerClasses = useMemo(() => {
-    const baseClasses = 'flex flex-col bg-white safe-area h-full keyboard-transition';
+    const baseClasses = 'flex flex-col bg-white safe-area keyboard-transition';
     const platformClass = `platform-${keyboard.platform}`;
     const keyboardClass = keyboard.isVisible ? 'keyboard-active' : '';
     const androidKeyboardClass = keyboard.platform === 'android' && capabilities.supportsKeyboardEnvVariables 
@@ -38,22 +38,44 @@ export const ChatContainer: React.FC = () => {
     return [baseClasses, platformClass, keyboardClass, androidKeyboardClass].filter(Boolean).join(' ');
   }, [keyboard.platform, keyboard.isVisible, capabilities.supportsKeyboardEnvVariables]);
 
+  // 플랫폼별 컨테이너 높이 조정
+  const containerStyle = useMemo(() => {
+    if (keyboard.platform === 'ios' && keyboard.isVisible) {
+      // iOS: 키보드 높이만큼 컨테이너 높이를 줄임
+      const availableHeight = window.innerHeight - keyboard.height;
+      return {
+        height: `${availableHeight}px`,
+        maxHeight: `${availableHeight}px`,
+      };
+    }
+    
+    if (keyboard.platform === 'android') {
+      // Android: 항상 전체 viewport 높이 사용
+      return {
+        height: '100vh',
+        maxHeight: '100vh',
+      };
+    }
+    
+    // 기본값: 전체 높이
+    return {
+      height: '100%',
+    };
+  }, [keyboard.platform, keyboard.isVisible, keyboard.height]);
+
   // iOS에서 키보드가 열릴 때 입력 영역의 위치 계산
   const getInputAreaStyle = useMemo(() => {
     if (!keyboard.isVisible) {
       return {};
     }
 
-    // iOS Safari: transform 기반 positioning (position: fixed 문제 해결)
+    // iOS Safari: 키보드 위에 고정
     if (keyboard.platform === 'ios') {
-      const visualHeight = window.visualViewport?.height || window.innerHeight;
       return {
-        position: 'absolute' as const,
-        bottom: 0,
+        position: 'fixed' as const,
+        bottom: `${keyboard.height}px`,
         left: 0,
         right: 0,
-        top: `${visualHeight - 60}px`, // 입력 영역 높이만큼 위에서 계산
-        transform: 'translateY(-100%)',
         zIndex: 1000,
       };
     }
@@ -63,7 +85,7 @@ export const ChatContainer: React.FC = () => {
       return {};
     }
 
-    // Fallback: 기본 fixed positioning
+    // Android fallback: fixed positioning
     return {
       position: 'fixed' as const,
       bottom: `${keyboard.height}px`,
@@ -88,15 +110,17 @@ export const ChatContainer: React.FC = () => {
     return [baseClasses, keyboardClass, iosClass, androidClass].filter(Boolean).join(' ');
   }, [keyboard.isVisible, keyboard.platform, capabilities.supportsKeyboardEnvVariables]);
 
-  // 메시지 리스트 영역 패딩 조정 (iOS에서 키보드가 열릴 때)
+  // 메시지 리스트 영역 패딩 조정
   const getMessageListStyle = useMemo(() => {
-    if (keyboard.platform === 'ios' && keyboard.isVisible) {
+    // iOS는 컨테이너 높이가 줄어들므로 패딩 불필요
+    // Android는 키보드가 올라와도 스크롤 가능하도록 패딩 추가
+    if (keyboard.platform === 'android' && keyboard.isVisible) {
       return {
-        paddingBottom: '80px', // 입력 영역을 위한 공간 확보
+        paddingBottom: `${keyboard.height + 60}px`, // 키보드 + 입력 영역 높이
       };
     }
     return {};
-  }, [keyboard.platform, keyboard.isVisible]);
+  }, [keyboard.platform, keyboard.isVisible, keyboard.height]);
 
   return (
     <>
@@ -110,7 +134,7 @@ export const ChatContainer: React.FC = () => {
         </div>
       )}
 
-      <div className={containerClasses}>
+      <div className={containerClasses} style={containerStyle}>
         {/* Header */}
         <header className="border-b border-gray-200 bg-white px-4 py-3 flex-shrink-0">
           <h1 className="text-lg font-semibold text-gray-900">채팅</h1>
