@@ -97,7 +97,14 @@ export const MessageInput: React.FC = () => {
       )}
       
       {/* 입력 영역 */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
+      <div 
+        className="border-t border-gray-200 bg-white px-4 py-3"
+        style={{
+          paddingBottom: `max(0.75rem, env(safe-area-inset-bottom))`,
+          paddingLeft: `max(1rem, env(safe-area-inset-left))`,
+          paddingRight: `max(1rem, env(safe-area-inset-right))`,
+        }}
+      >
         <div className="flex items-end gap-2">
           {/* + 버튼 */}
           <button

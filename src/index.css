@@ -1,11 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --safe-area-inset-top: env(safe-area-inset-top);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+  
+  /* VirtualKeyboard API 지원 */
+  --keyboard-inset-height: env(keyboard-inset-height, 0px);
+  --keyboard-inset-top: env(keyboard-inset-top, 0px);
+  --keyboard-inset-bottom: env(keyboard-inset-bottom, 0px);
+  
+  /* 계산된 값들 (KeyboardController에서 동적 업데이트) */
   --keyboard-height: 0px;
+  --keyboard-visible: 0;
   --viewport-height: 100vh;
   --visual-viewport-height: 100vh;
+  --available-height: calc(100vh - var(--safe-area-inset-top) - var(--safe-area-inset-bottom) - var(--keyboard-height));
 }
 
 html, body, #root {
@@ -49,10 +60,26 @@ html, body, #root {
   }
 }
 
-/* iOS 키보드 처리를 위한 유틸리티 클래스 */
-.ios-keyboard-active {
-  /* iOS에서 키보드가 활성화된 상태 */
-  position: relative !important;
+/* VirtualKeyboard API 지원 브라우저용 그리드 레이아웃 */
+@supports (height: env(keyboard-inset-height)) {
+  body {
+    display: grid;
+    grid-template-rows: 1fr env(keyboard-inset-height, 0px);
+    grid-template-areas: 
+      "main"
+      "keyboard";
+  }
+  
+  #root {
+    grid-area: main;
+    overflow: hidden;
+  }
+}
+
+/* 키보드 처리를 위한 유틸리티 클래스 */
+.keyboard-active {
+  /* 키보드가 활성화된 상태 */
+  height: var(--available-height) !important;
   overflow: hidden !important;
 }
 
@@ -60,4 +87,13 @@ html, body, #root {
 .scrollable-area {
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Safe area 적용 유틸리티 */
+.safe-area-inset {
+  padding-top: var(--safe-area-inset-top);
+  padding-right: var(--safe-area-inset-right);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
 }
