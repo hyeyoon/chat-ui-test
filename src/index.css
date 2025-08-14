@@ -130,7 +130,14 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Simplified platform-specific states */
+/* Platform-specific keyboard states */
 .ios-keyboard-active, .android-keyboard-active {
   overscroll-behavior: none !important;
+}
+
+/* Input area styling when keyboard is active */
+.keyboard-input-active {
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
+  background-color: white !important;
 }
