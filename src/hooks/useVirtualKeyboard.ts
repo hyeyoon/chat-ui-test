@@ -92,8 +92,6 @@ export function useVirtualKeyboard(): VirtualKeyboardState {
         document.documentElement.style.setProperty('--detected-keyboard-height', `${keyboardHeight}px`);
         
         // Platform-specific fixes
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
         
         if (isIOS) {
           if (isVisible) {
